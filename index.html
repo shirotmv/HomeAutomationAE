@@ -763,60 +763,64 @@
 
             <!-- Camera Tab -->
 <div id="camera" class="tab-content">
-                <div class="card">
-                    <div class="camera-container">
-                        <!-- Video stream container -->
-                        <div class="camera-stream-container">
-                            <canvas id="cameraCanvas" width="320" height="240" style="display: none;"></canvas>
-                            <div class="camera-placeholder" id="cameraPlaceholder">
-                                <div class="camera-icon">📹</div>
-                                <div class="camera-text">Cámara en Tiempo Real</div>
-                                <div class="camera-text" style="font-size: 0.875rem;" id="cameraStatus">Listo para iniciar</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Camera controls -->
-                        <div class="camera-controls">
-                            <button class="camera-btn" id="startStreamBtn" onclick="startCameraStream()">
-                                <span>▶️</span>
-                                Iniciar
-                            </button>
-                            <button class="camera-btn" id="stopStreamBtn" onclick="stopCameraStream()" style="background: var(--secondary-color); display: none;">
-                                <span>⏸️</span>
-                                Detener
-                            </button>
-                            <button class="camera-btn" onclick="takePhoto()" style="background: #4CAF50;">
-                                <span>📸</span>
-                                Foto
-                            </button>
-                        </div>
-                        
-                        <!-- Camera info -->
-                        <div class="camera-info" id="cameraInfo" style="display: none;">
-                            <div class="info-item">
-                                <span class="info-label">Estado:</span>
-                                <span class="info-value" id="streamStatus">Detenido</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Resolución:</span>
-                                <span class="info-value">320x240</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Formato:</span>
-                                <span class="info-value">RGB565</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Photos section -->
-                        <div class="photos-section" id="photosSection" style="display: none;">
-                            <h3>Fotos Guardadas</h3>
-                            <div class="photos-grid" id="photosGrid">
-                                <!-- Photos will be loaded here -->
-                            </div>
-                        </div>
-                    </div>
+    <div class="card">
+        <div class="camera-container">
+            <!-- Video stream container -->
+            <div class="camera-stream-container">
+                <img id="stream" style="display: none; width: 100%; height: 100%; object-fit: cover;" />
+                <div class="camera-placeholder" id="cameraPlaceholder">
+                    <div class="camera-icon">📹</div>
+                    <div class="camera-text">Cámara en Tiempo Real</div>
+                    <div class="camera-text" style="font-size: 0.875rem;" id="cameraStatus">Listo para iniciar</div>
                 </div>
             </div>
+            
+            <!-- Camera controls -->
+            <div class="camera-controls">
+                <button class="camera-btn" id="startStreamBtn" onclick="startCameraStream()">
+                    <span>▶️</span>
+                    Iniciar
+                </button>
+                <button class="camera-btn" id="stopStreamBtn" onclick="stopCameraStream()" style="background: var(--secondary-color); display: none;">
+                    <span>⏸️</span>
+                    Detener
+                </button>
+                <button class="camera-btn" onclick="takePhoto()" style="background: #4CAF50;">
+                    <span>📸</span>
+                    Foto
+                </button>
+                <button class="camera-btn" onclick="loadPhotos()" style="background: #9C27B0;">
+                    <span>🖼️</span>
+                    Ver Fotos
+                </button>
+            </div>
+            
+            <!-- Camera info -->
+            <div class="camera-info" id="cameraInfo" style="display: none;">
+                <div class="info-item">
+                    <span class="info-label">Estado:</span>
+                    <span class="info-value" id="streamStatus">Detenido</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Resolución:</span>
+                    <span class="info-value">320x240</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Formato:</span>
+                    <span class="info-value">JPEG</span>
+                </div>
+            </div>
+            
+            <!-- Photos section -->
+            <div class="photos-section" id="photosSection" style="display: none;">
+                <h3>Fotos Guardadas</h3>
+                <div class="photos-grid" id="photosGrid">
+                    <!-- Photos will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
             <!-- About Tab -->
             <div id="about" class="tab-content">
@@ -898,7 +902,7 @@ let streamReader = null;
 
 
         // Función para iniciar el stream de cámara
-async function startCameraStream() {
+function startCameraStream() {
     console.log('Iniciando stream de cámara...');
     
     // Update UI
@@ -906,78 +910,26 @@ async function startCameraStream() {
     document.getElementById('startStreamBtn').style.display = 'none';
     document.getElementById('stopStreamBtn').style.display = 'inline-block';
     document.getElementById('cameraInfo').style.display = 'block';
-    document.getElementById('streamStatus').textContent = 'Conectando...';
+    document.getElementById('streamStatus').textContent = 'Activo';
+    
+    // Mostrar el elemento de stream y ocultar placeholder
+    document.getElementById('stream').style.display = 'block';
+    document.getElementById('cameraPlaceholder').style.display = 'none';
     
     streamActive = true;
     
-    try {
-        // Usar polling en lugar de stream continuo para RGB565
-        await pollCameraFrames();
-        
-        // Update camera info
-        getCameraInfo();
-        
-    } catch (error) {
-        console.error('Error iniciando stream:', error);
-        document.getElementById('cameraStatus').textContent = 'Error de conexión';
-        document.getElementById('streamStatus').textContent = 'Error';
-        stopCameraStream();
-    }
-}
-
-// Función para hacer polling de frames RGB565
-async function pollCameraFrames() {
-    const canvas = document.getElementById('cameraCanvas');
-    const ctx = canvas.getContext('2d');
+    // Iniciar el stream usando la ruta del ESP32
+    const streamImg = document.getElementById('stream');
+    streamImg.src = '/stream?' + Date.now();
     
-    document.getElementById('streamStatus').textContent = 'Activo';
-    document.getElementById('cameraStatus').textContent = 'Stream activo';
-    document.getElementById('cameraPlaceholder').style.display = 'none';
-    document.getElementById('cameraCanvas').style.display = 'block';
-    
-    // Función para obtener un frame
-    async function getFrame() {
-        if (!streamActive) return;
-        
-        try {
-            const response = await fetch('/api/camera/frame', {
-                method: 'GET',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
-            
-            const arrayBuffer = await response.arrayBuffer();
-            console.log('Frame recibido:', arrayBuffer.byteLength, 'bytes');
-            
-            if (arrayBuffer.byteLength === 0) {
-                throw new Error('Frame vacío recibido');
-            }
-            
-            const uint8Array = new Uint8Array(arrayBuffer);
-            
-            // Renderizar el frame RGB565
-            renderRGB565ToCanvas(uint8Array, ctx);
-            
-        } catch (error) {
-            console.error('Error obteniendo frame:', error);
-            document.getElementById('cameraStatus').textContent = 'Error: ' + error.message;
-            // Continuar intentando si hay error
-        }
-        
-        // Programar el siguiente frame
+    // Actualizar el stream cada 200ms
+    streamInterval = setInterval(() => {
         if (streamActive) {
-            setTimeout(getFrame, 100); // ~10 FPS
+            streamImg.src = '/stream?' + Date.now();
         }
-    }
+    }, 200);
     
-    // Iniciar el polling
-    getFrame();
+    document.getElementById('cameraStatus').textContent = 'Stream activo';
 }
 
 // Función para detener el stream
@@ -986,155 +938,105 @@ function stopCameraStream() {
     
     streamActive = false;
     
+    // Limpiar el intervalo
+    if (streamInterval) {
+        clearInterval(streamInterval);
+        streamInterval = null;
+    }
+    
     // Update UI
     document.getElementById('cameraStatus').textContent = 'Stream detenido';
     document.getElementById('startStreamBtn').style.display = 'inline-block';
     document.getElementById('stopStreamBtn').style.display = 'none';
     document.getElementById('streamStatus').textContent = 'Detenido';
     
-    // Hide canvas and show placeholder
-    document.getElementById('cameraCanvas').style.display = 'none';
+    // Ocultar stream y mostrar placeholder
+    document.getElementById('stream').style.display = 'none';
+    document.getElementById('stream').src = '';
     document.getElementById('cameraPlaceholder').style.display = 'block';
-    
-    // Send stop command to server
-    fetch('/api/camera/stop', {method: 'POST'})
-        .catch(error => console.error('Error stopping stream:', error));
-}
-
-// Función corregida para renderizar RGB565 en canvas
-function renderRGB565ToCanvas(data, ctx) {
-    const canvas = ctx.canvas;
-    const width = canvas.width;
-    const height = canvas.height;
-    const expectedSize = width * height * 2; // 2 bytes per pixel for RGB565
-    
-    console.log(`Renderizando frame: ${data.length} bytes, esperado: ${expectedSize}`);
-    
-    if (data.length < expectedSize) {
-        console.warn('Datos insuficientes para el frame completo');
-        return;
-    }
-    
-    // Crear ImageData
-    const imageData = ctx.createImageData(width, height);
-    const pixels = imageData.data;
-    
-    // Convertir RGB565 a RGBA
-    for (let i = 0; i < expectedSize && i < data.length; i += 2) {
-        const pixelIndex = (i / 2) * 4;
-        
-        if (pixelIndex + 3 >= pixels.length) break;
-        
-        // Leer RGB565 en formato little-endian
-        const low = data[i];
-        const high = data[i + 1];
-        const pixel565 = (high << 8) | low;
-        
-        // Extraer componentes RGB de 16 bits
-        const r5 = (pixel565 >> 11) & 0x1F;  // 5 bits rojos
-        const g6 = (pixel565 >> 5) & 0x3F;   // 6 bits verdes
-        const b5 = pixel565 & 0x1F;          // 5 bits azules
-        
-        // Expandir a 8 bits con mejor precisión
-        const r8 = (r5 << 3) | (r5 >> 2);   // 5->8 bits
-        const g8 = (g6 << 2) | (g6 >> 4);   // 6->8 bits
-        const b8 = (b5 << 3) | (b5 >> 2);   // 5->8 bits
-        
-        // Asignar valores RGBA
-        pixels[pixelIndex] = r8;       // Red
-        pixels[pixelIndex + 1] = g8;   // Green
-        pixels[pixelIndex + 2] = b8;   // Blue
-        pixels[pixelIndex + 3] = 255;  // Alpha (opaco)
-    }
-    
-    // Dibujar en el canvas
-    ctx.putImageData(imageData, 0, 0);
 }
 
 // Función para tomar foto
-async function takePhoto() {
+function takePhoto() {
     console.log('Tomando foto...');
     
-    try {
-        const response = await fetch('/api/camera/photo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+    fetch('/capture')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Foto guardada: ' + data.filename);
+                // Mostrar la foto tomada si se desea
+                if (confirm('¿Deseas ver la foto tomada?')) {
+                    window.open('/view?file=' + data.filename, '_blank');
+                }
+            } else {
+                showNotification('Error al tomar foto: ' + data.error);
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error de conexión al tomar foto');
         });
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            console.log('Foto tomada:', data.filename);
-            showNotification('Foto guardada: ' + data.filename);
-            loadPhotos();
-        } else {
-            console.error('Error tomando foto:', data);
-            showNotification('Error al tomar foto');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        showNotification('Error de conexión al tomar foto: ' + error.message);
-    }
-}
-
-// Función para obtener información de la cámara
-async function getCameraInfo() {
-    try {
-        const response = await fetch('/api/camera/info');
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        console.log('Camera info:', data);
-        if (data.inicializada) {
-            document.getElementById('cameraInfo').style.display = 'block';
-        }
-    } catch (error) {
-        console.error('Error getting camera info:', error);
-    }
 }
 
 // Función para cargar fotos
-async function loadPhotos() {
-    try {
-        const response = await fetch('/api/camera/photos');
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
-        const photos = await response.json();
-        
-        const photosGrid = document.getElementById('photosGrid');
-        const photosSection = document.getElementById('photosSection');
-        
-        if (photos.length > 0) {
-            photosSection.style.display = 'block';
-            photosGrid.innerHTML = photos.map(photo => `
-                <div class="photo-item">
-                    <div class="photo-info">
-                        <div class="photo-name">${photo.name}</div>
-                        <div class="photo-size">${Math.round(photo.size / 1024)} KB</div>
-                        <a href="${photo.download_url}" download class="download-btn">
-                            📥 Descargar
-                        </a>
-                    </div>
-                </div>
-            `).join('');
-        } else {
-            photosSection.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Error loading photos:', error);
+function loadPhotos() {
+    console.log('Cargando fotos...');
+    
+    fetch('/list')
+        .then(response => response.json())
+        .then(data => {
+            const photosGrid = document.getElementById('photosGrid');
+            const photosSection = document.getElementById('photosSection');
+            
+            if (data.files && data.files.length > 0) {
+                photosSection.style.display = 'block';
+                
+                let html = '';
+                data.files.forEach(file => {
+                    html += `
+                        <div class="photo-item" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin: 10px; text-align: center;">
+                            <img src="/view?file=${file}" alt="${file}" style="max-width: 150px; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;">
+                            <div style="font-size: 0.8rem; margin-bottom: 8px;">${file}</div>
+                            <div>
+                                <a href="/download?file=${file}" class="btn" style="display: inline-block; padding: 4px 8px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px; margin: 2px; font-size: 0.8rem;">📥 Descargar</a>
+                                <button onclick="deletePhoto('${file}')" class="btn" style="padding: 4px 8px; background: #F44336; color: white; border: none; border-radius: 4px; margin: 2px; font-size: 0.8rem; cursor: pointer;">🗑️ Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                photosGrid.innerHTML = html;
+                showNotification(`Se encontraron ${data.files.length} fotos`);
+            } else {
+                photosSection.style.display = 'block';
+                photosGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No hay fotos guardadas</p>';
+                showNotification('No hay fotos guardadas');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error cargando fotos');
+        });
+}
+
+// Función para eliminar foto
+function deletePhoto(filename) {
+    if (confirm('¿Estás seguro de eliminar ' + filename + '?')) {
+        fetch('/delete?file=' + filename)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Foto eliminada correctamente');
+                    loadPhotos(); // Recargar la lista
+                } else {
+                    showNotification('Error eliminando foto: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error eliminando foto');
+            });
     }
 }
 
@@ -1163,40 +1065,9 @@ function showNotification(message) {
     }, 3000);
 }
 
-// Función para probar la conexión de la cámara
-async function testCameraConnection() {
-    console.log('Probando conexión de cámara...');
-    
-    try {
-        const response = await fetch('/api/camera/info');
-        const data = await response.json();
-        
-        if (data.inicializada) {
-            console.log('✅ Cámara inicializada correctamente');
-            return true;
-        } else {
-            console.log('❌ Cámara no inicializada');
-            return false;
-        }
-    } catch (error) {
-        console.error('❌ Error conectando con cámara:', error);
-        return false;
-    }
-}
-
-// Cargar fotos y verificar cámara al cargar la página
-window.addEventListener('load', async () => {
-    console.log('Página cargada, verificando cámara...');
-    
-    // Verificar conexión de cámara
-    const cameraOk = await testCameraConnection();
-    
-    if (cameraOk) {
-        loadPhotos();
-        getCameraInfo();
-    } else {
-        document.getElementById('cameraStatus').textContent = 'Error: Cámara no disponible';
-    }
+// Inicializar cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página cargada, cámara lista');
 });
         // Initialize theme
         function initTheme() {
