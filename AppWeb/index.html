@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang='es'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Casa Inteligente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #06b6d4;
+            --secondary-color: #6b7280;
+            
+            /* Light mode */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --nav-bg: #ffffff;
+            --nav-border: #e5e7eb;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #475569;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            --nav-bg: #1e293b;
+            --nav-border: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .theme-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Content */
+        .content {
+            flex: 1;
+            padding: 1rem;
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Home Tab */
+        .time-display {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .current-time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .current-date {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .connection-status {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-item {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .status-indicator {
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .status-connected { background: var(--success-color); color: white; }
+        .status-disconnected { background: var(--danger-color); color: white; }
+        .status-no-data { background: var(--warning-color); color: black; }
+
+        .sensors-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .sensor-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .sensor-card:hover {
+            transform: scale(1.05);
+        }
+
+        .sensor-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sensor-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .sensor-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Controls Tab */
+        .control-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .control-section h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .control-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .control-btn.primary { background: var(--primary-color); color: white; }
+        .control-btn.success { background: var(--success-color); color: white; }
+        .control-btn.danger { background: var(--danger-color); color: white; }
+        .control-btn.warning { background: var(--warning-color); color: black; }
+        .control-btn.info { background: var(--info-color); color: white; }
+        .control-btn.secondary { background: var(--secondary-color); color: white; }
+
+        .control-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Camera Tab */
+        .camera-container {
+            text-align: center;
+        }
+
+        .camera-placeholder {
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 3rem 1rem;
+            margin-bottom: 1rem;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .camera-icon {
+            font-size: 4rem;
+            color: var(--text-secondary);
+        }
+
+        .camera-text {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .camera-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .camera-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        /* About Tab */
+        .about-info {
+            text-align: center;
+        }
+
+        .about-icon {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .about-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .about-version {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .about-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-list {
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+        }
+
+        .feature-icon {
+            color: var(--success-color);
+            font-size: 1.125rem;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            background: var(--nav-bg);
+            border-top: 1px solid var(--nav-border);
+            padding: 0.75rem 0;
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .nav-items {
+            display: flex;
+            justify-content: space-around;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 8px;
+            min-width: 60px;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+            background: var(--bg-secondary);
+        }
+
+        .nav-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 360px) {
+            .sensors-grid,
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .connection-status {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .current-time {
+                font-size: 2rem;
+            }
+        }
+
+
+
+
+        /* Camera specific styles */
+        .camera-stream-container {
+            position: relative;
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .camera-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 240px;
+            background: var(--card-background);
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+        }
+
+        .camera-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .camera-text {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        #cameraCanvas {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .camera-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .camera-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .camera-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .camera-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--card-background);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            color: var(--text-primary);
+        }
+
+        .photos-section {
+            margin-top: 2rem;
+        }
+
+        .photos-section h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .photos-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .photo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .photo-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .photo-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .photo-size {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .download-btn {
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span>🏠</span>
+                    Casa Inteligente
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+                    🌙
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content">
+            <!-- Home Tab -->
+            <div id="home" class="tab-content active">
+                <div class="card">
+                    <div class="time-display">
+                        <div class="current-time" id="currentTime">--:--</div>
+                        <div class="current-date" id="currentDate">-- de --</div>
+                    </div>
+                    
+                    <div class="connection-status" id="connectionStatus">
+                        <div class="status-item">
+                            <div class="status-label">WiFi</div>
+                            <div class="status-indicator status-disconnected">Desconectado</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Arduino</div>
+                            <div class="status-indicator status-no-data">Sin datos</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        📊 Sensores en Tiempo Real
+                    </h3>
+                    <div class="sensors-grid" id="sensorsGrid">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            Cargando sensores...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Tab -->
+            <div id="controls" class="tab-content">
+                <div class="card">
+                    <div class="control-section">
+                        <h3>⚙️ Sistema Principal</h3>
+                        <div class="controls-grid">
+                            <button class="control-btn primary" onclick="toggleSistema()">
+                                <div class="control-icon">🔌</div>
+                                Sistema
+                            </button>
+                            <button class="control-btn warning" onclick="togglePIR()">
+                                <div class="control-icon">👁️</div>
+                                PIR
+                            </button>
+                            <button class="control-btn danger" onclick="toggleAuto()">
+                                <div class="control-icon">🤖</div>
+                                Modo Auto
+                            </button>
+                            <button class="control-btn info" onclick="actualizarDatos()">
+                                <div class="control-icon">🔄</div>
+                                Actualizar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <h3>🎛️ Control de Dispositivos</h3>
+                        <div class="controls-grid">
+                            <button class="control-btn success" onclick="toggleCooler()">
+                                <div class="control-icon">🌀</div>
+                                Ventilador
+                            </button>
+                            <button class="control-btn warning" onclick="toggleBuzzer()">
+                                <div class="control-icon">🔔</div>
+                                Buzzer
+                            </button>
+                            <button class="control-btn info" onclick="toggleLuzExt()">
+                                <div class="control-icon">💡</div>
+                                Luz Exterior
+                            </button>
+                            <button class="control-btn primary" onclick="toggleLuzInt()">
+                                <div class="control-icon">🏠</div>
+                                Luz Interior
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <h3>🤖 Modo Automático</h3>
+                        <div class="controls-grid">
+                            <button class="control-btn secondary" onclick="autoCooler()">
+                                <div class="control-icon">🌀</div>
+                                Auto Ventilador
+                            </button>
+                            <button class="control-btn secondary" onclick="autoBuzzer()">
+                                <div class="control-icon">🔔</div>
+                                Auto Buzzer
+                            </button>
+                            <button class="control-btn secondary" onclick="autoLuzExt()">
+                                <div class="control-icon">💡</div>
+                                Auto Luz Ext
+                            </button>
+                            <button class="control-btn secondary" onclick="autoLuzInt()">
+                                <div class="control-icon">🏠</div>
+                                Auto Luz Int
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera Tab -->
+<div id="camera" class="tab-content">
+    <div class="card">
+        <div class="camera-container">
+            <!-- Video stream container -->
+            <div class="camera-stream-container">
+                <img id="stream" style="display: none; width: 100%; height: 100%; object-fit: cover;" />
+                <div class="camera-placeholder" id="cameraPlaceholder">
+                    <div class="camera-icon">📹</div>
+                    <div class="camera-text">Cámara en Tiempo Real</div>
+                    <div class="camera-text" style="font-size: 0.875rem;" id="cameraStatus">Listo para iniciar</div>
+                </div>
+            </div>
+            
+            <!-- Camera controls -->
+            <div class="camera-controls">
+                <button class="camera-btn" id="startStreamBtn" onclick="startCameraStream()">
+                    <span>▶️</span>
+                    Iniciar
+                </button>
+                <button class="camera-btn" id="stopStreamBtn" onclick="stopCameraStream()" style="background: var(--secondary-color); display: none;">
+                    <span>⏸️</span>
+                    Detener
+                </button>
+                <button class="camera-btn" onclick="takePhoto()" style="background: #4CAF50;">
+                    <span>📸</span>
+                    Foto
+                </button>
+                <button class="camera-btn" onclick="loadPhotos()" style="background: #9C27B0;">
+                    <span>🖼️</span>
+                    Ver Fotos
+                </button>
+            </div>
+            
+            <!-- Camera info -->
+            <div class="camera-info" id="cameraInfo" style="display: none;">
+                <div class="info-item">
+                    <span class="info-label">Estado:</span>
+                    <span class="info-value" id="streamStatus">Detenido</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Resolución:</span>
+                    <span class="info-value">320x240</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Formato:</span>
+                    <span class="info-value">JPEG</span>
+                </div>
+            </div>
+            
+            <!-- Photos section -->
+            <div class="photos-section" id="photosSection" style="display: none;">
+                <h3>Fotos Guardadas</h3>
+                <div class="photos-grid" id="photosGrid">
+                    <!-- Photos will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+            <!-- About Tab -->
+            <div id="about" class="tab-content">
+                <div class="card">
+                    <div class="about-info">
+                        <div class="about-icon">🏠</div>
+                        <h2 class="about-title">Casa Inteligente</h2>
+                        <div class="about-version">Versión Beta 0.1</div>
+                        <p class="about-description">
+                            Sistema de domótica para el control y monitoreo 
+                            de dispositivos del hogar.
+                        </p>
+                        
+                        <div class="feature-list">
+                            <div class="feature-item">
+                                <span class="feature-icon">✅</span>
+                                <span>Monitoreo en tiempo real</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">✅</span>
+                                <span>Control remoto de dispositivos</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">✅</span>
+                                <span>Modo automático inteligente</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">✅</span>
+                                <span>Interfaz móvil optimizada</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">✅</span>
+                                <span>Tema claro y oscuro</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🔄</span>
+                                <span>Cámara en tiempo real</span>
+                            </div>
+                        </div>
+                        
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                            Desarrollado para el hogar
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-items">
+                <div class="nav-item active" onclick="showTab('home')">
+                    <div class="nav-icon">🏠</div>
+                    <div>Home</div>
+                </div>
+                <div class="nav-item" onclick="showTab('controls')">
+                    <div class="nav-icon">🎛️</div>
+                    <div>Controles</div>
+                </div>
+                <div class="nav-item" onclick="showTab('camera')">
+                    <div class="nav-icon">📹</div>
+                    <div>Cámara</div>
+                </div>
+                <div class="nav-item" onclick="showTab('about')">
+                    <div class="nav-icon">ℹ️</div>
+                    <div>Acerca</div>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        let datosActuales = {};
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        let streamActive = false;
+        let streamInterval = null;
+let streamReader = null;
+        let streamController = null;
+
+
+        // Función para iniciar el stream de cámara
+function startCameraStream() {
+    console.log('Iniciando stream de cámara...');
+    
+    // Update UI
+    document.getElementById('cameraStatus').textContent = 'Conectando...';
+    document.getElementById('startStreamBtn').style.display = 'none';
+    document.getElementById('stopStreamBtn').style.display = 'inline-block';
+    document.getElementById('cameraInfo').style.display = 'block';
+    document.getElementById('streamStatus').textContent = 'Activo';
+    
+    // Mostrar el elemento de stream y ocultar placeholder
+    document.getElementById('stream').style.display = 'block';
+    document.getElementById('cameraPlaceholder').style.display = 'none';
+    
+    streamActive = true;
+    
+    // Iniciar el stream usando la ruta del ESP32
+    const streamImg = document.getElementById('stream');
+    streamImg.src = '/stream?' + Date.now();
+    
+    // Actualizar el stream cada 200ms
+    streamInterval = setInterval(() => {
+        if (streamActive) {
+            streamImg.src = '/stream?' + Date.now();
+        }
+    }, 200);
+    
+    document.getElementById('cameraStatus').textContent = 'Stream activo';
+}
+
+// Función para detener el stream
+function stopCameraStream() {
+    console.log('Deteniendo stream de cámara...');
+    
+    streamActive = false;
+    
+    // Limpiar el intervalo
+    if (streamInterval) {
+        clearInterval(streamInterval);
+        streamInterval = null;
+    }
+    
+    // Update UI
+    document.getElementById('cameraStatus').textContent = 'Stream detenido';
+    document.getElementById('startStreamBtn').style.display = 'inline-block';
+    document.getElementById('stopStreamBtn').style.display = 'none';
+    document.getElementById('streamStatus').textContent = 'Detenido';
+    
+    // Ocultar stream y mostrar placeholder
+    document.getElementById('stream').style.display = 'none';
+    document.getElementById('stream').src = '';
+    document.getElementById('cameraPlaceholder').style.display = 'block';
+}
+
+// Función para tomar foto
+function takePhoto() {
+    console.log('Tomando foto...');
+    
+    fetch('/capture')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Foto guardada: ' + data.filename);
+                // Mostrar la foto tomada si se desea
+                if (confirm('¿Deseas ver la foto tomada?')) {
+                    window.open('/view?file=' + data.filename, '_blank');
+                }
+            } else {
+                showNotification('Error al tomar foto: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error de conexión al tomar foto');
+        });
+}
+
+// Función para cargar fotos
+function loadPhotos() {
+    console.log('Cargando fotos...');
+    
+    fetch('/list')
+        .then(response => response.json())
+        .then(data => {
+            const photosGrid = document.getElementById('photosGrid');
+            const photosSection = document.getElementById('photosSection');
+            
+            if (data.files && data.files.length > 0) {
+                photosSection.style.display = 'block';
+                
+                let html = '';
+                data.files.forEach(file => {
+                    html += `
+                        <div class="photo-item" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin: 10px; text-align: center;">
+                            <img src="/view?file=${file}" alt="${file}" style="max-width: 150px; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;">
+                            <div style="font-size: 0.8rem; margin-bottom: 8px;">${file}</div>
+                            <div>
+                                <a href="/download?file=${file}" class="btn" style="display: inline-block; padding: 4px 8px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px; margin: 2px; font-size: 0.8rem;">📥 Descargar</a>
+                                <button onclick="deletePhoto('${file}')" class="btn" style="padding: 4px 8px; background: #F44336; color: white; border: none; border-radius: 4px; margin: 2px; font-size: 0.8rem; cursor: pointer;">🗑️ Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                photosGrid.innerHTML = html;
+                showNotification(`Se encontraron ${data.files.length} fotos`);
+            } else {
+                photosSection.style.display = 'block';
+                photosGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No hay fotos guardadas</p>';
+                showNotification('No hay fotos guardadas');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error cargando fotos');
+        });
+}
+
+// Función para eliminar foto
+function deletePhoto(filename) {
+    if (confirm('¿Estás seguro de eliminar ' + filename + '?')) {
+        fetch('/delete?file=' + filename)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Foto eliminada correctamente');
+                    loadPhotos(); // Recargar la lista
+                } else {
+                    showNotification('Error eliminando foto: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error eliminando foto');
+            });
+    }
+}
+
+// Función para mostrar notificaciones
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        z-index: 1000;
+        font-size: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Inicializar cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página cargada, cámara lista');
+});
+        // Initialize theme
+        function initTheme() {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            updateThemeToggle();
+        }
+
+        // Toggle theme
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            localStorage.setItem('theme', currentTheme);
+            updateThemeToggle();
+        }
+
+        function updateThemeToggle() {
+            const toggle = document.getElementById('themeToggle');
+            toggle.textContent = currentTheme === 'light' ? '🌙' : '☀️';
+        }
+
+        // Tab navigation
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to nav item
+            event.target.closest('.nav-item').classList.add('active');
+        }
+
+        // Update time and date
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('es-ES', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+            const dateString = now.toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            document.getElementById('currentTime').textContent = timeString;
+            document.getElementById('currentDate').textContent = dateString;
+        }
+
+        // Fetch data from API
+        function actualizarDatos() {
+            fetch('/api/datos')
+                .then(response => response.json())
+                .then(data => {
+                    datosActuales = data;
+                    actualizarInterfaz();
+                })
+                .catch(error => {
+                    console.error('Error al obtener datos:', error);
+                    datosActuales = {
+                        datosRecibidos: false,
+                        wifiConectado: false,
+                        temperatura: 'N/A',
+                        humedad: 'N/A',
+                        mq2: 'N/A',
+                        microfono: 'N/A',
+                        movimientos: 'N/A',
+                        sistemaActivo: false,
+                        pirActivo: false,
+                        ledCasa: false,
+                        ledExterior: false,
+                        cooler: false,
+                        buzzer: false,
+                        envioAutomatico: false,
+                        modoLedInt: 'manual',
+                        modoLedExt: 'manual',
+                        modoCooler: 'manual',
+                        modoBuzzer: 'manual'
+                    };
+                    actualizarInterfaz();
+                });
+        }
+
+        function actualizarInterfaz() {
+            // Update connection status
+            const connectionDiv = document.getElementById('connectionStatus');
+            connectionDiv.innerHTML = `
+                <div class="status-item">
+                    <div class="status-label">WiFi</div>
+                    <div class="status-indicator ${datosActuales.wifiConectado ? 'status-connected' : 'status-disconnected'}">
+                        ${datosActuales.wifiConectado ? 'Conectado' : 'Desconectado'}
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Arduino</div>
+                    <div class="status-indicator ${datosActuales.datosRecibidos ? 'status-connected' : 'status-no-data'}">
+                        ${datosActuales.datosRecibidos ? 'Conectado' : 'Sin datos'}
+                    </div>
+                </div>
+            `;
+
+            // Update sensors
+            const sensorsDiv = document.getElementById('sensorsGrid');
+            if (datosActuales.datosRecibidos) {
+                sensorsDiv.innerHTML = `
+                    <div class="sensor-card">
+                        <div class="sensor-icon">🌡️</div>
+                        <div class="sensor-value">${datosActuales.temperatura !== 'N/A' ? datosActuales.temperatura + '°C' : 'N/A'}</div>
+                        <div class="sensor-label">Temperatura</div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-icon">💧</div>
+                        <div class="sensor-value">${datosActuales.humedad !== 'N/A' ? datosActuales.humedad + '%' : 'N/A'}</div>
+                        <div class="sensor-label">Humedad</div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-icon">💨</div>
+                        <div class="sensor-value">${datosActuales.mq2}</div>
+                        <div class="sensor-label">MQ2 (Gases)</div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-icon">🎤</div>
+                        <div class="sensor-value">${datosActuales.microfono}</div>
+                        <div class="sensor-label">Micrófono</div>
+                    </div>
+                    <div class="sensor-card" style="grid-column: 1/-1;">
+                        <div class="sensor-icon">🚶</div>
+                        <div class="sensor-value">${datosActuales.movimientos}</div>
+                        <div class="sensor-label">Movimientos PIR</div>
+                    </div>
+                `;
+            } else {
+                sensorsDiv.innerHTML = `
+                    <div class="loading" style="grid-column: 1/-1;">
+                        <div class="loading-spinner"></div>
+                        Esperando datos del Arduino...
+                    </div>
+                `;
+            }
+        }
+
+        // Helper function for sending POST requests
+        function sendCommand(path) {
+            fetch(path, {method: 'POST'})
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('Network response was not ok for ' + path);
+                    }
+                    setTimeout(actualizarDatos, 500);
+                })
+                .catch(error => console.error('Error sending command to ' + path + ':', error));
+        }
+
+        // Control functions
+        function toggleSistema() { sendCommand('/api/toggle/sistema'); }
+        function togglePIR() { sendCommand('/api/toggle/pir'); }
+        function toggleAuto() { sendCommand('/api/toggle/auto'); }
+        function toggleCooler() { sendCommand('/api/toggle/cooler'); }
+        function toggleBuzzer() { sendCommand('/api/toggle/buzzer'); }
+        function toggleLuzExt() { sendCommand('/api/toggle/luz_ext'); }
+        function toggleLuzInt() { sendCommand('/api/toggle/luz_int'); }
+        
+        // Auto mode functions
+        function autoCooler() { sendCommand('/api/auto/cooler'); }
+        function autoBuzzer() { sendCommand('/api/auto/buzzer'); }
+        function autoLuzExt() { sendCommand('/api/auto/luz_ext'); }
+        function autoLuzInt() { sendCommand('/api/auto/luz_int'); }
+
+        // Initialize app
+        function initApp() {
+            initTheme();
+            updateTime();
+            actualizarDatos();
+            
+            // Update time every second
+            setInterval(updateTime, 1000);
+            
+            // Update data every 3 seconds
+            setInterval(actualizarDatos, 3000);
+        }
+
+        // Start app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
